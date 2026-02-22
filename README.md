@@ -120,5 +120,4 @@ python manual_eval/compute_kappa.py manual_eval/ratings_annotator1.csv manual_ev
 
 - **REPRODUCIBILITY.md** — seeds, determinism, hardware, leakage prevention.
 - **ARTIFACT_CHECKLIST.md** — list of artifacts and locations.
-- **LICENSE** — MIT.
 - **CITATION.cff** — citation metadata.
