@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+title: "Mitigating Gender Bias in Software Engineering Course Materials Using Prompt Engineering and LLaMA"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - name: Anonymous Author(s)
+    affiliation: "Under Double-Blind Review"
+date-released: 2025-04-01
+url: "https://github.com/AnonymousAuthorFSE/biasrepair"
+keywords:
+  - gender bias
+  - prompt engineering
+  - software engineering education
+  - LLaMA
+  - inclusive text repair
+  - RAG
+  - self-consistency
+license: MIT

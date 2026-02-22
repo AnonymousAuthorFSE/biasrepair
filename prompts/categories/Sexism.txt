@@ -1,0 +1,1 @@
+Sexism: Remove language that evaluates capability or worth based on gender. This includes hostile sexism (undermining competence) and benevolent sexism (apparently positive but reinforcing stereotypes). Remove evaluative or paternalistic phrasing while preserving technical accuracy and domain terminology.

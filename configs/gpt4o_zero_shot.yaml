@@ -1,0 +1,30 @@
+# GPT-4o zero-shot baseline: same category-specific prompts, no RAG/SC/reflection. Key via env OPENAI_API_KEY.
+seed: 42
+data:
+  dataset_dir: data/dataset
+  splits_dir: data/splits
+  exemplars_path: data/exemplars/bias_free_exemplars.jsonl
+  limit: null
+
+generator:
+  backend: openai
+  model_name: gpt-4o
+  max_new_tokens: 256
+  temperature: 0.2
+
+rag:
+  enabled: false
+
+self_consistency:
+  enabled: false
+  n: 1
+
+reflection:
+  enabled: false
+
+evaluation:
+  bootstrap_resamples: 1000
+  bootstrap_alpha: 0.05
+
+prompts_dir: prompts
+run_dir: null

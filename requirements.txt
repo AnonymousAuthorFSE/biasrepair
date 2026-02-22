@@ -1,0 +1,12 @@
+# BiasRepair replication package
+torch>=2.0.0
+transformers>=4.36.0
+accelerate>=0.25.0
+sentence-transformers>=2.2.0
+chromadb>=0.4.0
+sacrebleu>=2.3.0
+numpy>=1.24.0
+scipy>=1.10.0
+pyyaml>=6.0
+tqdm>=4.65.0
+openai>=1.0.0

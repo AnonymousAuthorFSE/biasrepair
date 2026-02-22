@@ -1,0 +1,37 @@
+# Full BiasRepair: RAG + self-consistency + reflection
+seed: 42
+data:
+  dataset_dir: data/dataset
+  splits_dir: data/splits
+  exemplars_path: data/exemplars/bias_free_exemplars.jsonl
+  limit: null  # null = full test set
+
+rag:
+  enabled: true
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  k: 3
+  index_only_train: true  # leakage: exclude dev/test from index
+  index_path: data/rag_index  # persistent ChromaDB path
+
+generator:
+  model_name: meta-llama/Llama-3.1-8B-Instruct
+  max_new_tokens: 256
+  temperature: 0.7
+  do_sample: true
+
+self_consistency:
+  enabled: true
+  n: 5
+  selection: semantic_similarity  # filter residual markers; select max cosine to original; tie-break: concise + fluent
+
+reflection:
+  enabled: true
+  retry_budget: 2
+  flag_manual_review_on_failure: true
+
+evaluation:
+  bootstrap_resamples: 1000
+  bootstrap_alpha: 0.05
+
+prompts_dir: prompts
+run_dir: null

@@ -1,0 +1,1 @@
+Generic Pronouns: Replace male-default or gendered pronouns (e.g. "he", "his", "him", "she", "her") with inclusive alternatives. Use "they/them" for singular generic, "the developer", "the student", or rephrase to avoid pronouns. Ensure the sentence remains natural and technically accurate.

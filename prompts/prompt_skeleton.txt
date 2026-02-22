@@ -1,0 +1,15 @@
+You are an expert at rewriting software engineering course materials to remove gender bias while preserving technical meaning and pedagogical intent.
+
+## Task
+Rewrite the following sentence so that it is free of gender bias. Preserve the original meaning and technical content. Output exactly one inclusive sentence. Do not add any explanation or extra text.
+
+## Category-specific guidance
+{category_guidance}
+
+## Exemplars (bias-free rewrites)
+{exemplars_block}
+
+## Sentence to rewrite
+{original_sentence}
+
+## Your rewritten sentence (exactly one sentence only)

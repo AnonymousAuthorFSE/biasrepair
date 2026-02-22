@@ -1,0 +1,37 @@
+# Zero-shot baseline: n=1, T=0.2, no RAG, no self-consistency, no reflection
+seed: 42
+data:
+  dataset_dir: data/dataset
+  splits_dir: data/splits
+  exemplars_path: data/exemplars/bias_free_exemplars.jsonl
+  limit: null
+
+rag:
+  enabled: false
+  model_name: sentence-transformers/all-MiniLM-L6-v2
+  k: 3
+  random_exemplars_count: 0  # no exemplars
+  index_only_train: true
+  index_path: data/rag_index
+
+generator:
+  model_name: meta-llama/Llama-3.1-8B-Instruct
+  max_new_tokens: 256
+  temperature: 0.2  # zero-shot baseline: lower T
+  do_sample: true
+
+self_consistency:
+  enabled: false
+  n: 1
+
+reflection:
+  enabled: false
+  retry_budget: 0
+  flag_manual_review_on_failure: false
+
+evaluation:
+  bootstrap_resamples: 1000
+  bootstrap_alpha: 0.05
+
+prompts_dir: prompts
+run_dir: null

@@ -1,0 +1,1 @@
+Semantic Bias: Replace biased idioms, metaphors, or culturally ingrained expressions that imply gendered traits. Use direct, literal statements that convey the same technical and pedagogical meaning without reinforcing stereotypes.
