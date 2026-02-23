@@ -1,71 +1,113 @@
-"""
-Paired bootstrap resampling for significance testing (e.g. full vs zero-shot; p < 0.05).
-"""
+from __future__ import annotations
+import json
+from pathlib import Path
+from typing import Any, Callable, Dict, List
+
 import numpy as np
-from typing import Any, Callable
 
 
 def paired_bootstrap(
-    preds_a: list[str],
-    refs: list[str],
-    preds_b: list[str],
-    metric_fn: Callable[[list[str], list[str]], float],
-    n_resamples: int = 1000,
+    preds_a: List[str],
+    refs: List[str],
+    preds_b: List[str],
+    metric_fn: Callable[[List[str], List[str]], float],
+    n_resamples: int = 10_000,
     seed: int = 42,
-) -> tuple[float, float, float]:
-    """
-    Compute metric for A and B, then bootstrap distribution of (A - B).
-    Returns (metric_a, metric_b, p_value) where p_value is proportion of resamples where B >= A (one-sided) or 2*min(p, 1-p) for two-sided.
-    Paper: improvements of full over baseline are significant at p < 0.05; we do two-sided: reject if p < alpha.
-    """
-    assert len(preds_a) == len(refs) == len(preds_b)
+    ci: float = 0.95,
+) -> Dict[str, float]:
+
+    if not (len(preds_a) == len(refs) == len(preds_b)):
+        raise ValueError("preds_a, preds_b, refs must have the same length")
+
     n = len(refs)
     rng = np.random.default_rng(seed)
-    score_a = metric_fn(preds_a, refs)
-    score_b = metric_fn(preds_b, refs)
-    diffs = []
-    for _ in range(n_resamples):
+
+    score_a = float(metric_fn(preds_a, refs))
+    score_b = float(metric_fn(preds_b, refs))
+    delta_obs = score_a - score_b
+
+    deltas = np.empty(n_resamples, dtype=np.float64)
+
+    for t in range(n_resamples):
         idx = rng.integers(0, n, size=n)
         a_sub = [preds_a[i] for i in idx]
         b_sub = [preds_b[i] for i in idx]
         r_sub = [refs[i] for i in idx]
-        sa = metric_fn(a_sub, r_sub)
-        sb = metric_fn(b_sub, r_sub)
-        diffs.append(sa - sb)
-    diffs = np.array(diffs)
-    # Two-sided p-value: proportion where |A - B| (bootstrap) <= 0 when we observe A > B
-    # P(observed difference could be due to chance): proportion of resamples where B >= A
-    p_value = float(np.mean(diffs <= 0))
-    p_value = 2 * min(p_value, 1 - p_value)
-    return score_a, score_b, p_value
+        deltas[t] = float(metric_fn(a_sub, r_sub)) - float(metric_fn(b_sub, r_sub))
+
+    p_value = float(np.mean(np.abs(deltas) >= abs(delta_obs)))
+
+    alpha = 1.0 - ci
+    ci_low = float(np.quantile(deltas, alpha / 2.0))
+    ci_high = float(np.quantile(deltas, 1.0 - alpha / 2.0))
+
+    return {
+        "score_a": score_a,
+        "score_b": score_b,
+        "delta": float(delta_obs),
+        "p_value": p_value,
+        "ci_low": ci_low,
+        "ci_high": ci_high,
+        "n": float(n),
+        "n_resamples": float(n_resamples),
+    }
 
 
-def run_bootstrap_comparisons(
-    run_dirs: dict[str, str],
-    refs: list[str],
-    metric_fn: Callable[[list[str], list[str]], float],
-    n_resamples: int = 1000,
+def load_predictions_jsonl(run_dir: str | Path, rewrite_key: str = "rewrite") -> List[str]:
+    run_dir = Path(run_dir)
+    preds = []
+    with open(run_dir / "predictions.jsonl", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            preds.append(row.get(rewrite_key, ""))
+    return preds
+
+
+def run_paired_bootstrap_matrix(
+    run_dirs: Dict[str, str | Path],
+    refs: List[str],
+    metric_fn: Callable[[List[str], List[str]], float],
+    compare_to: str,
+    n_resamples: int = 10_000,
     seed: int = 42,
-) -> dict[str, Any]:
-    """run_dirs: config_name -> path to predictions.jsonl. Load predictions, compare baseline vs full."""
-    import json
-    from pathlib import Path
-    results = {}
-    preds_by_config = {}
-    for name, path in run_dirs.items():
-        rows = []
-        with open(Path(path) / "predictions.jsonl", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    rows.append(json.loads(line))
-        preds_by_config[name] = [r.get("rewrite", "") for r in rows]
-    # Align by id if needed; here assume same order
-    for name, preds in preds_by_config.items():
-        if len(preds) != len(refs):
+) -> Dict[str, Any]:
+
+    preds_by = {name: load_predictions_jsonl(path) for name, path in run_dirs.items()}
+
+    if compare_to not in preds_by:
+        raise ValueError(f"compare_to='{compare_to}' not found in run_dirs")
+
+    base = preds_by[compare_to]
+    out: Dict[str, Any] = {}
+
+    for name, preds in preds_by.items():
+        if len(preds) != len(refs) or len(base) != len(refs):
+            out[name] = {
+                "error": "length_mismatch",
+                "len_preds": len(preds),
+                "len_base": len(base),
+                "len_refs": len(refs),
+            }
             continue
-        results[name] = {
-            "metric": metric_fn(preds, refs),
-            "n": len(preds),
-        }
-    return results
+
+        if name == compare_to:
+            out[name] = {
+                "score": float(metric_fn(preds, refs)),
+                "n": len(refs),
+            }
+            continue
+
+        stats = paired_bootstrap(
+            preds_a=preds,
+            refs=refs,
+            preds_b=base,
+            metric_fn=metric_fn,
+            n_resamples=n_resamples,
+            seed=seed,
+        )
+        out[name] = stats
+
+    return out
